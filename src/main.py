@@ -67,7 +67,6 @@ def download(session):
     downloads_dir = BASE_DIR / 'downloads'
     downloads_dir.mkdir(exist_ok=True)
     archive_path = downloads_dir / filename
-
     response = session.get(archive_url)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
