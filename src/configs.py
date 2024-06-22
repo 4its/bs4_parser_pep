@@ -4,7 +4,7 @@ from logging.handlers import RotatingFileHandler
 
 from constants import BASE_DIR
 
-LOG_FORMAT = '"%(asctime)s - [%(levelname)s] - %(message)s"'
+LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
 DT_FORMAT = '%d.%m.%Y %H:%M:%S'
 
 
@@ -25,7 +25,7 @@ def configure_argument_parser(available_modes):
         '-o',
         '--output',
         choices=('pretty', 'file'),
-        help='Вывод в формате PrettyTable'
+        help='Дополнительные способы вывода данных'
     )
     return parser
 
