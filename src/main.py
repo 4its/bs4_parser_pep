@@ -3,21 +3,17 @@ import re
 from urllib.parse import urljoin
 
 import requests_cache
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, MAIN_DOC_URL
+from constants import BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL,EXPECTED_STATUS
 from outputs import control_output
-from utils import get_response, find_tag
+from utils import get_soup, get_response, find_tag
 
 
 def whats_new(session):
     whats_new_url = urljoin(MAIN_DOC_URL, 'whatsnew/')
-    response = get_response(session, whats_new_url)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, features='lxml')
+    soup = get_soup(session, whats_new_url)
     main_div = find_tag(soup, 'section', attrs={'id': 'what-s-new-in-python'})
     div_with_ul = find_tag(main_div, 'div', attrs={'class': 'toctree-wrapper'})
     sections_by_python = div_with_ul.find_all(
@@ -28,11 +24,8 @@ def whats_new(session):
         version_a_tag = section.find('a')
         href = version_a_tag['href']
         version_link = urljoin(whats_new_url, href)
-        response = get_response(session, version_link)
-        if response is None:
-            continue
-        soup = BeautifulSoup(response.text, features='lxml')
-        h1 = find_tag(soup, 'h1'),
+        soup = get_soup(session, version_link)
+        h1 = find_tag(soup, 'h1')
         dl = find_tag(soup, 'dl')
         dl_text = dl.text.replace('\n', ' ')
         results.append((version_link, h1.text, dl_text))
@@ -40,10 +33,7 @@ def whats_new(session):
 
 
 def latest_versions(session):
-    response = get_response(session, MAIN_DOC_URL)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, features='lxml')
+    soup = get_soup(session, MAIN_DOC_URL)
     sidebar = find_tag(soup, 'div', {'class': 'sphinxsidebar'})
     ul_tags = sidebar.find_all('ul')
     for ul in ul_tags:
@@ -68,10 +58,7 @@ def latest_versions(session):
 def download(session):
     downloads_url = urljoin(MAIN_DOC_URL, 'download.html')
     pattern = r'.+pdf-a4\.zip$'
-    response = get_response(session, downloads_url)
-    if response is None:
-        return
-    soup = BeautifulSoup(response.text, features='lxml')
+    soup = get_soup(session, downloads_url)
     table = find_tag(soup, 'table', {'class': 'docutils'})
     pdf_a4_tag = find_tag(table, 'a', {'href': re.compile(pattern)})
     pdf_a4_link = pdf_a4_tag['href']
@@ -86,11 +73,52 @@ def download(session):
         file.write(response.content)
     logging.info(f'Архив был загружен и сохранён: {archive_path}')
 
+def pep(session):
+    soup = get_soup(session, MAIN_PEP_URL)
+    section_table = find_tag(soup, 'section', {'id': 'numerical-index'})
+    tbody = find_tag(section_table, 'tbody')
+    pep_list = tbody.find_all('tr')
+    results = [('Статус', 'Количество')]
+    pep_count = 0
+    status_sums = {}
+    for pep in tqdm(pep_list, desc='Парсим список PEP'):
+        pep_count += 1
+        status_preview = pep.find('abbr').text
+        if len(status_preview) > 1:
+            status_preview = status_preview[1:]
+        else:
+            status_preview = ''
+        pep_link = urljoin(MAIN_PEP_URL, pep.find('a')['href'])
+        table = find_tag(
+            get_soup(session, pep_link),
+            'dl',
+            {'class': 'rfc2822 field-list simple'}
+        )
+        status_page = table.find(
+            string='Status'
+        ).parent.find_next_sibling('dd').string
+        if status_page in status_sums:
+            status_sums[status_page] += 1
+        if status_page not in status_sums:
+            status_sums[status_page] = 1
+        if status_page not in EXPECTED_STATUS[status_preview]:
+            message = (
+                'Несовпадающие статусы:'
+                f' {pep_link}'
+                f' Статус в карточке: {status_page}'
+                f' Ожидаемые статусы: {EXPECTED_STATUS[status_preview]}'
+            )
+            logging.warning(message)
+    results += [(status, status_sums[status]) for status in status_sums]
+    results.append(('Total', pep_count))
+    return results
+
 
 MODE_TO_FUNCTION = {
     'whats-new': whats_new,
     'latest-versions': latest_versions,
     'download': download,
+    'pep': pep,
 }
 
 
