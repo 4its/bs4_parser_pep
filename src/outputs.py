@@ -4,7 +4,7 @@ import logging
 
 from prettytable import PrettyTable
 
-from constants import BASE_DIR, DATETIME_FORMAT
+from constants import BASE_DIR, DATETIME_FORMAT, MESSAGES
 
 
 def control_output(results, cli_args):
@@ -39,6 +39,6 @@ def file_output(results, cli_args):
     file_name = f'{parser_mode}_{now_formatted}.csv'
     file_path = results_dir / file_name
     with open(file_path, 'w', encoding='utf-8') as file:
-        writer = csv.writer(file, dialect='unix')
+        writer = csv.writer(file, dialect=csv.unix_dialect)
         writer.writerows(results)
-    logging.info(f'Файл с результатами был сохранён: {file_path}')
+    logging.info(MESSAGES.file_result.format(file_path))

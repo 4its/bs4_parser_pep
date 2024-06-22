@@ -6,7 +6,7 @@ import requests_cache
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL, EXPECTED_STATUS
+from constants import BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL, EXPECTED_STATUS, MESSAGES
 from outputs import control_output
 from utils import get_soup, find_tag
 
@@ -41,7 +41,7 @@ def latest_versions(session):
             a_tags = ul.find_all('a')
             break
     else:
-        raise Exception('Ничего не нашлось')
+        raise ValueError('Ничего не нашлось')
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
     for a_tag in a_tags:
@@ -70,7 +70,7 @@ def download(session):
     response = session.get(archive_url)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
-    logging.info(f'Архив был загружен и сохранён: {archive_path}')
+    logging.info(MESSAGES.load_archive.format(archive_path))
 
 
 def pep(session):
@@ -81,7 +81,7 @@ def pep(session):
     results = [('Статус', 'Количество')]
     pep_count = 0
     status_sums = {}
-    for pep in tqdm(pep_list, desc='Парсим список PEP'):
+    for pep in tqdm(pep_list, desc=MESSAGES.tqdm_description):
         pep_count += 1
         status_preview = pep.find('abbr').text
         if len(status_preview) > 1:
@@ -102,15 +102,15 @@ def pep(session):
         if status_page not in status_sums:
             status_sums[status_page] = 1
         if status_page not in EXPECTED_STATUS[status_preview]:
-            message = (
-                'Несовпадающие статусы:'
-                f' {pep_link}'
-                f' Статус в карточке: {status_page}'
-                f' Ожидаемые статусы: {EXPECTED_STATUS[status_preview]}'
+            logging.warning(
+                MESSAGES.status_not_match.format(
+                    pep_link,
+                    status_page,
+                    EXPECTED_STATUS[status_preview]
+                )
             )
-            logging.warning(message)
     results += [(status, status_sums[status]) for status in status_sums]
-    results.append(('Total', pep_count))
+    results.append(('Всего', pep_count))
     return results
 
 
@@ -124,10 +124,10 @@ MODE_TO_FUNCTION = {
 
 def main():
     configure_logging()
-    logging.info('Парсер запущен!')
+    logging.info(MESSAGES.start_parse)
     arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
     args = arg_parser.parse_args()
-    logging.info(f'Аргументы коммандной строки: {args}')
+    logging.info(MESSAGES.command_args.format(args))
     session = requests_cache.CachedSession()
     if args.clear_cache:
         session.cache.clear()
@@ -135,7 +135,7 @@ def main():
     results = MODE_TO_FUNCTION[parser_mode](session)
     if results is not None:
         control_output(results, args)
-    logging.info('Парсер завершил работу.')
+    logging.info(MESSAGES.finish_parse)
 
 
 if __name__ == '__main__':
