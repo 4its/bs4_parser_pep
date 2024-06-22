@@ -6,9 +6,9 @@ import requests_cache
 from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
-from constants import BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL,EXPECTED_STATUS
+from constants import BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL, EXPECTED_STATUS
 from outputs import control_output
-from utils import get_soup, get_response, find_tag
+from utils import get_soup, find_tag
 
 
 def whats_new(session):
@@ -72,6 +72,7 @@ def download(session):
     with open(archive_path, 'wb') as file:
         file.write(response.content)
     logging.info(f'Архив был загружен и сохранён: {archive_path}')
+
 
 def pep(session):
     soup = get_soup(session, MAIN_PEP_URL)
