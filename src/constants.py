@@ -6,6 +6,8 @@ BASE_DIR = Path(__file__).parent
 MAIN_DOC_URL = 'https://docs.python.org/3/'
 MAIN_PEP_URL = 'https://peps.python.org/'
 
+TQDM_NCOLS = 100
+
 
 class Choices:
     PRETTY = 'pretty'
@@ -44,6 +46,7 @@ class Texts:
     )
     TQDM_DESCRIPTION = 'Парсим список PEP'
     LOAD_ARCHIVE = 'Архив был загружен и сохранён: {}'
+    EXCEPTION = 'Ошибка в работе программы: {}'
 
 
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'
