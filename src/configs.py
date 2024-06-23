@@ -2,38 +2,38 @@ import argparse
 import logging
 from logging.handlers import RotatingFileHandler
 
-from constants import CHOICES, LOGS, TEXTS
+from constants import Choices, Logs, Texts
 
 LOG_FORMAT = '%(asctime)s - [%(levelname)s] - %(message)s'
 DT_FORMAT = '%d.%m.%Y %H:%M:%S'
 
 
 def configure_argument_parser(available_modes):
-    parser = argparse.ArgumentParser(description=TEXTS.parser_description)
+    parser = argparse.ArgumentParser(description=Texts.PARSER_DESCRIPTION)
     parser.add_argument(
         'mode',
         choices=available_modes,
-        help=TEXTS.parser_mode
+        help=Texts.PARSER_MODE
     )
     parser.add_argument(
         '-c',
         '--clear-cache',
         action='store_true',
-        help=TEXTS.parser_cache_clean
+        help=Texts.PARSER_CACHE_CLEAN
     )
     parser.add_argument(
         '-o',
         '--output',
-        choices=(CHOICES.pretty, CHOICES.file,),
-        help=TEXTS.parser_outputs
+        choices=(Choices.PRETTY, Choices.FILE,),
+        help=Texts.PARSER_OUTPUTS
     )
     return parser
 
 
 def configure_logging():
-    LOGS.directory.mkdir(exist_ok=True)
+    Logs.DIRECTORY.mkdir(exist_ok=True)
     rotating_handler = RotatingFileHandler(
-        LOGS.file_path, maxBytes=10 ** 6, backupCount=5
+        Logs.FILE_PATH, maxBytes=10 ** 6, backupCount=5
     )
     logging.basicConfig(
         datefmt=DT_FORMAT,
