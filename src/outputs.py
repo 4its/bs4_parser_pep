@@ -33,10 +33,10 @@ def file_output(results, cli_args):
 
 
 OUTPUTS = {
-        Choices.PRETTY: pretty_output,
-        Choices.FILE: file_output,
-        None: default_output
-    }
+    Choices.PRETTY: pretty_output,
+    Choices.FILE: file_output,
+    None: default_output
+}
 
 
 def control_output(results, cli_args):
