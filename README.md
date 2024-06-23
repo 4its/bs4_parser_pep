@@ -7,7 +7,12 @@
 - сформировать отчет по документам PEP(_Python Enhancement Proposal_).
 
 ## Технологии
- **|** [**Python 3.12**](https://docs.python.org/3.12/) **|** [**requests-cache 1.0.0**](https://pypi.org/project/requests-cache/1.0.0/) **|** [**tqdm 4.66.4**](https://pypi.org/project/tqdm/4.66.4/) **|** [**beautifulsoup4 4.12.3**](https://pypi.org/project/beautifulsoup4/4.12.3/) **|** [**lxml 5.2.2**](https://pypi.org/project/lxml/5.2.2/) **|** [**prettytable 2.1.0**](https://pypi.org/project/prettytable/2.1.0/) **|** 
+- [**Python**](https://docs.python.org/3.12/)
+- [**requests-cache**](https://pypi.org/project/requests-cache/1.0.0/)
+- [**tqdm**](https://pypi.org/project/tqdm/4.66.4/)
+- [**beautifulsoup4**](https://pypi.org/project/beautifulsoup4/4.12.3/)
+- [**lxml**](https://pypi.org/project/lxml/5.2.2/)
+- [**prettytable**](https://pypi.org/project/prettytable/2.1.0/) 
 
 ## Использование
 
