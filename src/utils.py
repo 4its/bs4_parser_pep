@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 from requests import RequestException
 
-from constants import TEXTS
+from constants import Texts
 from exceptions import ParserFindTagException
 
 
@@ -12,14 +12,14 @@ def get_response(session, url, encoding='utf-8'):
         return response
     except RequestException as error:
         raise ConnectionError(
-            TEXTS.response_error.format(url, error)
+            Texts.RESPONSE_ERROR.format(url, error)
         )
 
 
 def find_tag(soup, tag, attrs=None):
     searched_tag = soup.find(tag, attrs=(attrs or {}))
     if searched_tag is None:
-        raise ParserFindTagException(TEXTS.tag_not_found.format(tag, attrs))
+        raise ParserFindTagException(Texts.TAG_NOT_FOUND.format(tag, attrs))
     return searched_tag
 
 
