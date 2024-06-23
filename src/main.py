@@ -21,16 +21,21 @@ def whats_new(session):
         ' li.toctree-l1 a[href$=".html"]'
     )
     results = []
+    errors = []
     for link in tqdm(version_links, ncols=TQDM_NCOLS):
         version_link = urljoin(Urls.WHATS_NEW, link['href'])
-        soup = get_soup(session, version_link)
-        results.append(
-            (
-                version_link,
-                find_tag(soup, 'h1').text,
-                find_tag(soup, 'dl').text.replace('\n', ' ')
+        try:
+            soup = get_soup(session, version_link)
+            results.append(
+                (
+                    version_link,
+                    find_tag(soup, 'h1').text,
+                    find_tag(soup, 'dl').text.replace('\n', ' ')
+                )
             )
-        )
+        except Exception as error:
+            errors.append(Texts.RESPONSE_ERROR.format(version_links, error))
+    [logging.error(item) for item in errors]
     return [
         ('Ссылка на статью', 'Заголовок', 'Редактор, автор'),
         *results
@@ -84,29 +89,34 @@ def pep(session):
     tbody = find_tag(section_table, 'tbody')
     pep_list = tbody.find_all('tr')
     status_sums = defaultdict(int)
+    errors = []
     warnings = []
     for pep in tqdm(pep_list, desc=Texts.TQDM_DESCRIPTION, ncols=TQDM_NCOLS):
         status_preview = pep.find('abbr').text
         status_preview = status_preview[1:] if len(status_preview) > 1 else ''
         pep_link = urljoin(MAIN_PEP_URL, pep.find('a')['href'])
-        table = find_tag(
-            get_soup(session, pep_link),
-            'dl',
-            {'class': 'rfc2822 field-list simple'}
-        )
-        status_page = table.find(
-            string='Status'
-        ).parent.find_next_sibling('dd').string
-        status_sums[status_page] += 1
-        if status_page not in EXPECTED_STATUS[status_preview]:
-            warnings.append(
-                Texts.STATUS_NOT_MATCH.format(
-                    pep_link,
-                    status_page,
-                    EXPECTED_STATUS[status_preview]
-                )
+        try:
+            table = find_tag(
+                get_soup(session, pep_link),
+                'dl',
+                {'class': 'rfc2822 field-list simple'}
             )
-    [logging.warning(item) for item in warnings]
+            status_page = table.find(
+                string='Status'
+            ).parent.find_next_sibling('dd').string
+            status_sums[status_page] += 1
+            if status_page not in EXPECTED_STATUS[status_preview]:
+                warnings.append(
+                    Texts.STATUS_NOT_MATCH.format(
+                        pep_link,
+                        status_page,
+                        EXPECTED_STATUS[status_preview]
+                    )
+                )
+        except Exception as error:
+            errors.append(Texts.RESPONSE_ERROR.format(pep_link, error))
+    [logging.error(error) for error in errors]
+    [logging.warning(warning) for warning in warnings]
     return [
         ('Статус', 'Количество'),
         *status_sums.items(),
