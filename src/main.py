@@ -1,6 +1,6 @@
-from collections import defaultdict
 import logging
 import re
+from collections import defaultdict
 from urllib.parse import urljoin
 
 import requests_cache
@@ -8,21 +8,21 @@ from tqdm import tqdm
 
 from configs import configure_argument_parser, configure_logging
 from constants import (
-    BASE_DIR, MAIN_DOC_URL, MAIN_PEP_URL, EXPECTED_STATUS, Dirs, Texts, Urls
+    BASE_DIR, Dirs, EXPECTED_STATUS, MAIN_DOC_URL, MAIN_PEP_URL,
+    Texts, TQDM_NCOLS, Urls
 )
 from outputs import control_output
-from utils import get_soup, find_tag
+from utils import find_tag, get_soup
 
 
 def whats_new(session):
-    sections_by_python = get_soup(session, Urls.WHATS_NEW).select(
-        '#what-s-new-in-python div.toctree-wrapper li.toctree-l1'
+    version_links = get_soup(session, Urls.WHATS_NEW).select(
+        '#what-s-new-in-python div.toctree-wrapper'
+        ' li.toctree-l1 a[href$=".html"]'
     )
     results = []
-    for section in tqdm(sections_by_python):
-        version_a_tag = section.find('a')
-        href = version_a_tag['href']
-        version_link = urljoin(Urls.WHATS_NEW, href)
+    for link in tqdm(version_links, ncols=TQDM_NCOLS):
+        version_link = urljoin(Urls.WHATS_NEW, link['href'])
         soup = get_soup(session, version_link)
         results.append(
             (
@@ -46,7 +46,7 @@ def latest_versions(session):
             a_tags = ul.find_all('a')
             break
     else:
-        raise ValueError('Ничего не нашлось')
+        raise KeyError('Ничего не нашлось')
     results = []
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
     for a_tag in a_tags:
@@ -85,7 +85,7 @@ def pep(session):
     pep_list = tbody.find_all('tr')
     status_sums = defaultdict(int)
     warnings = []
-    for pep in tqdm(pep_list, desc=Texts.TQDM_DESCRIPTION):
+    for pep in tqdm(pep_list, desc=Texts.TQDM_DESCRIPTION, ncols=TQDM_NCOLS):
         status_preview = pep.find('abbr').text
         status_preview = status_preview[1:] if len(status_preview) > 1 else ''
         pep_link = urljoin(MAIN_PEP_URL, pep.find('a')['href'])
@@ -106,14 +106,12 @@ def pep(session):
                     EXPECTED_STATUS[status_preview]
                 )
             )
-    if warnings:
-        for warning in warnings:
-            logging.warning(warnings)
+    [logging.warning(item) for item in warnings]
     return [
-            ('Статус', 'Количество'),
-            *status_sums.items(),
-            ('Всего', sum(status_sums.values())),
-        ]
+        ('Статус', 'Количество'),
+        *status_sums.items(),
+        ('Всего', sum(status_sums.values())),
+    ]
 
 
 MODE_TO_FUNCTION = {
@@ -139,7 +137,7 @@ def main():
         if results is not None:
             control_output(results, args)
     except Exception as e:
-        logging.error(e)
+        logging.exception(Texts.EXCEPTION.format(e))
     logging.info(Texts.FINISH_PARSE)
 
 
