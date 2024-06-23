@@ -46,7 +46,8 @@ class Texts:
     )
     TQDM_DESCRIPTION = 'Парсим список PEP'
     LOAD_ARCHIVE = 'Архив был загружен и сохранён: {}'
-    EXCEPTION = 'Ошибка в работе программы: {}'
+    ERROR_WHEN_RUN = 'Возникла ошибка при работе программы: {}'
+    NOTHING_FOUND = 'Ничего не нашлось'
 
 
 DATETIME_FORMAT = '%Y-%m-%d_%H-%M-%S'

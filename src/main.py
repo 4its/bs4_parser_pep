@@ -16,13 +16,15 @@ from utils import find_tag, get_soup
 
 
 def whats_new(session):
-    version_links = get_soup(session, Urls.WHATS_NEW).select(
-        '#what-s-new-in-python div.toctree-wrapper'
-        ' li.toctree-l1 a[href$=".html"]'
-    )
     results = []
     errors = []
-    for link in tqdm(version_links, ncols=TQDM_NCOLS):
+    for link in tqdm(
+        get_soup(session, Urls.WHATS_NEW).select(
+            '#what-s-new-in-python div.toctree-wrapper'
+            ' li.toctree-l1 a[href$=".html"]'
+        ),
+        ncols=TQDM_NCOLS
+    ):
         version_link = urljoin(Urls.WHATS_NEW, link['href'])
         try:
             soup = get_soup(session, version_link)
@@ -33,9 +35,9 @@ def whats_new(session):
                     find_tag(soup, 'dl').text.replace('\n', ' ')
                 )
             )
-        except Exception as error:
-            errors.append(Texts.RESPONSE_ERROR.format(version_links, error))
-    [logging.error(item) for item in errors]
+        except ConnectionError as error:
+            errors.append(Texts.RESPONSE_ERROR.format(version_link, error))
+    logging.error('\n'.join(errors))
     return [
         ('Ссылка на статью', 'Заголовок', 'Редактор, автор'),
         *results
@@ -51,7 +53,7 @@ def latest_versions(session):
             a_tags = ul.find_all('a')
             break
     else:
-        raise KeyError('Ничего не нашлось')
+        raise LookupError(Texts.NOTHING_FOUND)
     results = []
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
     for a_tag in a_tags:
@@ -113,10 +115,10 @@ def pep(session):
                         EXPECTED_STATUS[status_preview]
                     )
                 )
-        except Exception as error:
+        except ConnectionError as error:
             errors.append(Texts.RESPONSE_ERROR.format(pep_link, error))
-    [logging.error(error) for error in errors]
-    [logging.warning(warning) for warning in warnings]
+    logging.error('\n'.join(errors))
+    logging.warning('\n'.join(warnings))
     return [
         ('Статус', 'Количество'),
         *status_sums.items(),
@@ -147,7 +149,7 @@ def main():
         if results is not None:
             control_output(results, args)
     except Exception as e:
-        logging.exception(Texts.EXCEPTION.format(e))
+        logging.exception(Texts.ERROR_WHEN_RUN.format(e))
     logging.info(Texts.FINISH_PARSE)
 
 
