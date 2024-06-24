@@ -37,7 +37,7 @@ def whats_new(session):
             )
         except ConnectionError as error:
             errors.append(Texts.RESPONSE_ERROR.format(version_link, error))
-    logging.error('\n'.join(errors))
+    [*map(logging.error, errors)]
     return [
         ('Ссылка на статью', 'Заголовок', 'Редактор, автор'),
         *results
@@ -117,8 +117,8 @@ def pep(session):
                 )
         except ConnectionError as error:
             errors.append(Texts.RESPONSE_ERROR.format(pep_link, error))
-    logging.error('\n'.join(errors))
-    logging.warning('\n'.join(warnings))
+    [*map(logging.error, errors)]
+    [*map(logging.warning, warnings)]
     return [
         ('Статус', 'Количество'),
         *status_sums.items(),
